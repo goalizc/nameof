@@ -67,7 +67,6 @@
 #  pragma GCC diagnostic ignored "-Wstringop-overflow" // Missing terminating nul 'enum_name_v'.
 #elif defined(_MSC_VER)
 #  pragma warning(push)
-#  pragma warning(disable : 26495) // Variable 'cstring<N>::chars_' is uninitialized.
 #  pragma warning(disable : 28020) // Arithmetic overflow: Using operator '-' on a 4 byte value and then casting the result to a 8 byte value.
 #  pragma warning(disable : 26451) // The expression '0<=_Param_(1)&&_Param_(1)<=1-1' is not true at this call.
 #  pragma warning(disable : 4514) // Unreferenced inline function has been removed.
@@ -196,224 +195,6 @@ constexpr string_view pointer_name() noexcept {
 }
 
 } // namespace nameof::customize
-
-template <std::uint16_t N>
-class [[nodiscard]] cstring {
- public:
-  using value_type      = const char;
-  using size_type       = std::uint16_t;
-  using difference_type = std::ptrdiff_t;
-  using pointer         = const char*;
-  using const_pointer   = const char*;
-  using reference       = const char&;
-  using const_reference = const char&;
-
-  using iterator       = const char*;
-  using const_iterator = const char*;
-
-  using reverse_iterator       = std::reverse_iterator<iterator>;
-  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-
-  constexpr explicit cstring(string_view str) noexcept : cstring{str, std::make_integer_sequence<std::uint16_t, N>{}} {
-    assert(str.size() > 0 && str.size() == N);
-  }
-
-  constexpr cstring() = delete;
-
-  constexpr cstring(const cstring&) = default;
-
-  constexpr cstring(cstring&&) = default;
-
-  ~cstring() = default;
-
-  cstring& operator=(const cstring&) = default;
-
-  cstring& operator=(cstring&&) = default;
-
-  [[nodiscard]] constexpr const_pointer data() const noexcept { return chars_; }
-
-  [[nodiscard]] constexpr size_type size() const noexcept { return N; }
-
-  [[nodiscard]] constexpr const_iterator begin() const noexcept { return data(); }
-
-  [[nodiscard]] constexpr const_iterator end() const noexcept { return data() + size(); }
-
-  [[nodiscard]] constexpr const_iterator cbegin() const noexcept { return begin(); }
-
-  [[nodiscard]] constexpr const_iterator cend() const noexcept { return end(); }
-
-  [[nodiscard]] constexpr const_reverse_iterator rbegin() const noexcept { return end(); }
-
-  [[nodiscard]] constexpr const_reverse_iterator rend() const noexcept { return begin(); }
-
-  [[nodiscard]] constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
-
-  [[nodiscard]] constexpr const_reverse_iterator crend() const noexcept { return rend(); }
-
-  [[nodiscard]] constexpr const_reference operator[](size_type i) const noexcept { return assert(i < size()), chars_[i]; }
-
-  [[nodiscard]] constexpr const_reference front() const noexcept { return chars_[0]; }
-
-  [[nodiscard]] constexpr const_reference back() const noexcept { return chars_[N]; }
-
-  [[nodiscard]] constexpr size_type length() const noexcept { return size(); }
-
-  [[nodiscard]] constexpr bool empty() const noexcept { return false; }
-
-  [[nodiscard]] constexpr int compare(string_view str) const noexcept { return string_view{data(), size()}.compare(str); }
-
-  [[nodiscard]] constexpr const char* c_str() const noexcept { return data(); }
-
-  [[nodiscard]] string str() const { return {begin(), end()}; }
-
-  [[nodiscard]] constexpr operator string_view() const noexcept { return {data(), size()}; }
-
-  [[nodiscard]] constexpr explicit operator const_pointer() const noexcept { return data(); }
-
-  [[nodiscard]] explicit operator string() const { return {begin(), end()}; }
-
- private:
-  template <std::uint16_t... I>
-  constexpr cstring(string_view str, std::integer_sequence<std::uint16_t, I...>) noexcept : chars_{str[I]..., '\0'} {}
-
-  char chars_[static_cast<std::size_t>(N) + 1];
-};
-
-template <>
-class [[nodiscard]] cstring<0> {
- public:
-  using value_type      = const char;
-  using size_type       = std::uint16_t;
-  using difference_type = std::ptrdiff_t;
-  using pointer         = const char*;
-  using const_pointer   = const char*;
-  using reference       = const char&;
-  using const_reference = const char&;
-
-  using iterator       = const char*;
-  using const_iterator = const char*;
-
-  using reverse_iterator       = std::reverse_iterator<iterator>;
-  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-
-  constexpr explicit cstring(string_view) noexcept {}
-
-  constexpr cstring() = default;
-
-  constexpr cstring(const cstring&) = default;
-
-  constexpr cstring(cstring&&) = default;
-
-  ~cstring() = default;
-
-  cstring& operator=(const cstring&) = default;
-
-  cstring& operator=(cstring&&) = default;
-
-  [[nodiscard]] constexpr const_pointer data() const noexcept { return nullptr; }
-
-  [[nodiscard]] constexpr size_type size() const noexcept { return 0; }
-
-  [[nodiscard]] constexpr const_iterator begin() const noexcept { return nullptr; }
-
-  [[nodiscard]] constexpr const_iterator end() const noexcept { return nullptr; }
-
-  [[nodiscard]] constexpr const_iterator cbegin() const noexcept { return nullptr; }
-
-  [[nodiscard]] constexpr const_iterator cend() const noexcept { return nullptr; }
-
-  [[nodiscard]] constexpr const_reverse_iterator rbegin() const noexcept { return {}; }
-
-  [[nodiscard]] constexpr const_reverse_iterator rend() const noexcept { return {}; }
-
-  [[nodiscard]] constexpr const_reverse_iterator crbegin() const noexcept { return {}; }
-
-  [[nodiscard]] constexpr const_reverse_iterator crend() const noexcept { return {}; }
-
-  [[nodiscard]] constexpr size_type length() const noexcept { return 0; }
-
-  [[nodiscard]] constexpr bool empty() const noexcept { return true; }
-
-  [[nodiscard]] constexpr int compare(string_view str) const noexcept { return string_view{}.compare(str); }
-
-  [[nodiscard]] constexpr const char* c_str() const noexcept { return nullptr; }
-
-  [[nodiscard]] string str() const { return {}; }
-
-  [[nodiscard]] constexpr operator string_view() const noexcept { return {}; }
-
-  [[nodiscard]] constexpr explicit operator const_pointer() const noexcept { return nullptr; }
-
-  [[nodiscard]] explicit operator string() const { return {}; }
-};
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator==(const cstring<N>& lhs, string_view rhs) noexcept {
-  return lhs.compare(rhs) == 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator==(string_view lhs, const cstring<N>& rhs) noexcept {
-  return lhs.compare(rhs) == 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator!=(const cstring<N>& lhs, string_view rhs) noexcept {
-  return lhs.compare(rhs) != 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator!=(string_view lhs, const cstring<N>& rhs) noexcept {
-  return lhs.compare(rhs) != 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator>(const cstring<N>& lhs, string_view rhs) noexcept {
-  return lhs.compare(rhs) > 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator>(string_view lhs, const cstring<N>& rhs) noexcept {
-  return lhs.compare(rhs) > 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator>=(const cstring<N>& lhs, string_view rhs) noexcept {
-  return lhs.compare(rhs) >= 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator>=(string_view lhs, const cstring<N>& rhs) noexcept {
-  return lhs.compare(rhs) >= 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator<(const cstring<N>& lhs, string_view rhs) noexcept {
-  return lhs.compare(rhs) < 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator<(string_view lhs, const cstring<N>& rhs) noexcept {
-  return lhs.compare(rhs) < 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator<=(const cstring<N>& lhs, string_view rhs) noexcept {
-  return lhs.compare(rhs) <= 0;
-}
-
-template <std::uint16_t N>
-[[nodiscard]] constexpr bool operator<=(string_view lhs, const cstring<N>& rhs) noexcept {
-  return lhs.compare(rhs) <= 0;
-}
-
-template <typename Char, typename Traits, std::uint16_t N>
-std::basic_ostream<Char, Traits>& operator<<(std::basic_ostream<Char, Traits>& os, const cstring<N>& srt) {
-  for (const auto c : srt) {
-    os.put(c);
-  }
-  return os;
-}
 
 namespace detail {
 
@@ -577,9 +358,9 @@ constexpr auto enum_name() noexcept {
 
   if constexpr (custom_name.empty()) {
     constexpr auto name = n<E, V>();
-    return cstring<name.size()>{name};
+    return name;
   } else {
-    return cstring<custom_name.size()>{custom_name};
+    return custom_name;
   }
 }
 
@@ -845,9 +626,9 @@ constexpr auto n() noexcept {
 #else
     constexpr auto name = string_view{};
 #endif
-    return cstring<name.size()>{name};
+    return name;
   } else {
-    return cstring<custom_name.size()>{custom_name};
+    return custom_name;
   }
 }
 
@@ -951,9 +732,9 @@ constexpr auto n() noexcept {
 #else
     constexpr auto name = string_view{};
 #endif
-    return cstring<name.size()>{name};
+    return name;
   } else {
-    return cstring<custom_name.size()>{custom_name};
+    return custom_name;
   }
 }
 
@@ -994,7 +775,7 @@ template <auto V>
 inline constexpr auto member_name_v = get_member_name<V>();
 #else
 template <auto V>
-inline constexpr auto member_name_v = cstring<0>{};
+inline constexpr auto member_name_v = string_view{};
 #endif
 
 template <auto U, auto V>
@@ -1021,9 +802,9 @@ constexpr auto p() noexcept {
 #else
     constexpr auto name = string_view{};
 #endif
-    return cstring<name.size()>{name};
+    return name;
   } else {
-    return cstring<custom_name.size()>{custom_name};
+    return custom_name;
   }
 }
 
@@ -1147,7 +928,7 @@ template <typename T, detail::enable_if_has_short_name_t<T, int> = 0>
   static_assert(!std::is_array_v<T> && !std::is_pointer_v<T>, "nameof::nameof_member requires non array and non pointer type.");
   constexpr string_view name = detail::pretty_name(detail::type_name_v<U>);
   static_assert(!name.empty(), "Type does not have a short name.");
-  return cstring<name.size()>{name};
+  return name;
 }
 
 // Obtains name of member.
@@ -1171,31 +952,31 @@ template <auto V, std::enable_if_t<std::is_pointer_v<decltype(V)>, int> = 0>
 } // namespace nameof
 
 // Obtains name of variable, function, macro.
-#define NAMEOF(...) []() constexpr noexcept {                         \
-  ::std::void_t<decltype(__VA_ARGS__)>();                             \
-  constexpr auto _name = ::nameof::detail::pretty_name(#__VA_ARGS__); \
-  static_assert(!_name.empty(), "Expression does not have a name.");  \
-  constexpr auto _size = _name.size();                                \
-  constexpr auto _nameof = ::nameof::cstring<_size>{_name};           \
-  return _nameof; }()
+#define NAMEOF(...)                                                                                \
+    []() constexpr noexcept {                                                                      \
+        ::std::void_t<decltype(__VA_ARGS__)>();                                                    \
+        constexpr auto _name = ::nameof::detail::pretty_name(#__VA_ARGS__);                        \
+        static_assert(!_name.empty(), "Expression does not have a name.");                         \
+        return _name;                                                                              \
+    }()
 
 // Obtains full name of variable, function, macro.
-#define NAMEOF_FULL(...) []() constexpr noexcept {                           \
-  ::std::void_t<decltype(__VA_ARGS__)>();                                    \
-  constexpr auto _name = ::nameof::detail::pretty_name(#__VA_ARGS__, false); \
-  static_assert(!_name.empty(), "Expression does not have a name.");         \
-  constexpr auto _size = _name.size();                                       \
-  constexpr auto _nameof_full = ::nameof::cstring<_size>{_name};             \
-  return _nameof_full; }()
+#define NAMEOF_FULL(...)                                                                           \
+    []() constexpr noexcept {                                                                      \
+        ::std::void_t<decltype(__VA_ARGS__)>();                                                    \
+        constexpr auto _name = ::nameof::detail::pretty_name(#__VA_ARGS__, false);                 \
+        static_assert(!_name.empty(), "Expression does not have a name.");                         \
+        return _name;                                                                              \
+    }()
 
 // Obtains raw name of variable, function, macro.
-#define NAMEOF_RAW(...) []() constexpr noexcept {                    \
-  ::std::void_t<decltype(__VA_ARGS__)>();                            \
-  constexpr auto _name = ::nameof::string_view{#__VA_ARGS__};        \
-  static_assert(!_name.empty(), "Expression does not have a name."); \
-  constexpr auto _size = _name.size();                               \
-  constexpr auto _nameof_raw = ::nameof::cstring<_size>{_name};      \
-  return _nameof_raw; }()
+#define NAMEOF_RAW(...)                                                                            \
+    []() constexpr noexcept {                                                                      \
+        ::std::void_t<decltype(__VA_ARGS__)>();                                                    \
+        constexpr auto _name = ::nameof::string_view{#__VA_ARGS__};                                \
+        static_assert(!_name.empty(), "Expression does not have a name.");                         \
+        return _name;                                                                              \
+    }()
 
 // Obtains name of enum variable.
 #define NAMEOF_ENUM(...) ::nameof::nameof_enum<::std::decay_t<decltype(__VA_ARGS__)>>(__VA_ARGS__)
